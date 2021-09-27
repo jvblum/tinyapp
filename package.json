@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/jvblum/tinyapp/issues"
   },
-  "homepage": "https://github.com/jvblum/tinyapp#readme"
+  "homepage": "https://github.com/jvblum/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
