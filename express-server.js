@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require("body-parser");
 const app = express();
 const PORT = 8080;
-app.use(bodyParser.urlencoded({extended: true})); // bodyParser deprecated
+app.use(bodyParser.urlencoded({extended: true})); // bodyParser deprecated; possible alternative: "express.erlencoded";
 app.set('view engine', 'ejs');
 
 const generateRandomString = (length) => {
@@ -11,9 +11,9 @@ const generateRandomString = (length) => {
   for (let i = 0; i < length; i++) {
     const rand = Math.floor(Math.random() * chars.length);
     res += chars[rand];
-  }  
+  }
   return res;
-}
+};
 
 const urlDatabase = {
   'b2xVn2': 'http://www.lighthouselabs.ca',
@@ -28,7 +28,7 @@ app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
 });
 
- app.get('/urls', (req, res) => {
+app.get('/urls', (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render('urls_index', templateVars);
 });
@@ -38,12 +38,17 @@ app.get('/urls/new', (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString(6); 
+  const shortURL = generateRandomString(6);
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect(`/urls/${shortURL}`);
-  console.log(urlDatabase);
-  console.log('req.body', req.body);
-  console.log(shortURL);
+  // console.log(urlDatabase);
+  // console.log('req.body', req.body);
+  // console.log(shortURL);
+});
+
+app.post('/urls/:shortURL/delete', (req, res) => {
+  delete urlDatabase[req.params.shortURL];
+  res.redirect('/urls');
 });
 
 app.get('/urls/:shortURL', (req, res) => {
@@ -55,7 +60,6 @@ app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
-
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
