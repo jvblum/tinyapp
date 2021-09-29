@@ -19,6 +19,19 @@ const urlDatabase = {
   'b2xVn2': 'http://www.lighthouselabs.ca',
   '9sm5xK': 'http://www.google.com',
 };
+const user = {name: null}; // student cannot make the instructions work, thus this approach;
+
+app.post('/login', (req, res) => {
+  res.cookie('username', req.body.username);
+  user.name = req.body.username;
+  res.redirect('/urls');
+});
+
+app.post('/logout', (req, res) => {
+  user.name = null;
+  res.clearCookie('username');
+  res.redirect('/urls');
+});
 
 app.get('/', (req, res) => {
   res.send('Hello there. Add "/urls" to get anywhere.');
@@ -29,22 +42,21 @@ app.get('/urls.json', (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
-  const templateVars = { urls: urlDatabase };
-  res.render('urls_index', templateVars);
+  const temp = {urls: urlDatabase, username: null};
+  if (user.name) temp.username = user.name;
+  res.render('urls_index', temp);
 });
 
 app.get('/urls/new', (req, res) => {
-  const edit = false;
-  res.render('urls_new', edit);
+  const temp = {edit: false, username: null};
+  if (user.name) temp.username = user.name;
+  res.render('urls_new', temp);
 });
 
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString(6);
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect(`/urls/${shortURL}`);
-  // console.log(urlDatabase);
-  // console.log('req.body', req.body);
-  // console.log(shortURL);
 });
 
 app.post('/urls/:shortURL/delete', (req, res) => {
@@ -52,19 +64,21 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   res.redirect('/urls');
 });
 
-app.post('/urls/:id/update', (req, res) => {
+app.post('/urls/:id/update', (req, res) => { // apparently needs to go before '/urls/:id'
   urlDatabase[req.params.id] = req.body.longURL; // to-do - case if url doesn't go anywhere;
   res.redirect(`/urls/${req.params.id}`);
 });
 
 app.post('/urls/:id', (req, res) => {
-  const temp = {shortURL: req.params.id, longURL: urlDatabase[req.params.id], edit: true};
+  const temp = {shortURL: req.params.id, longURL: urlDatabase[req.params.id], edit: true, username: null};
+  if (user.name) temp.username = user.name;
   res.render('urls_show', temp);
 });
 
 app.get('/urls/:shortURL', (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], edit: null}; // probably wrong;
-  res.render('urls_show', templateVars);
+  const temp = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL], edit: null, username: null};
+  if (user.name) temp.username = user.name;
+  res.render('urls_show', temp);
 });
 
 app.get("/u/:shortURL", (req, res) => {
