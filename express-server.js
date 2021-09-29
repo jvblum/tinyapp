@@ -35,16 +35,22 @@ const usersDb = {
       if (this[user].username === userReq) return this[user]; // return user object
     }
     return false;
+  },
+  searchEmail(emailReq) {
+    for (const user in this) {
+      if (this[user].email === emailReq) return this[user]; // return user object
+    }
+    return false;
   }
 };
 const temp = {
-  urls: urlDatabase, 
-  shortURL: null, 
-  longURL: null, 
-  username: null, 
+  urls: urlDatabase,
+  shortURL: null,
+  longURL: null,
+  user: null,
   edit: false};
 
-// register 
+// register
 
 app.get('/register', (req, res) => {
   res.render('register', temp);
@@ -52,19 +58,28 @@ app.get('/register', (req, res) => {
 
 app.post('/register', (req, res) => {
   const genId = generateRandomString(8);
-  const user = usersDb.searchUsername(req.body.username);
+  const srcUser = usersDb.searchUsername(req.body.username);
+  const srcEmail = usersDb.searchEmail(req.body.email);
+
+  const email = req.body.email;
+  const username = req.body.username;
+  const password = req.body.password;
   
-  if (user) res.send('username exists')
-  else {
+  if (!email || !username || !password) {
+    res.status(400).send('please fill out the forms properly (i.e. users cannot submit empty forms)');
+  } else if (srcUser) {
+    res.status(400).send('username exists');
+  } else if (srcEmail) {
+    res.status(400).send('email is already in use');
+  } else {
     usersDb[genId] = {
       id: genId,
-      email: req.body.email,
-      username: req.body.username,
-      password: req.body.password
+      email: email,
+      username: username,
+      password: password
     };
-    console.log(usersDb);
-    temp.username = req.body.username;
-    res.cookie('user_id', user.id);
+    temp.user = email;
+    res.cookie('user_id', genId);
     res.redirect('/urls');
   }
 });
@@ -73,22 +88,22 @@ app.post('/register', (req, res) => {
 
 app.get('/login', (req, res) => {
   res.render('login', temp);
-})
+});
 
 app.post('/login', (req, res) => {
   const user = usersDb.searchUsername(req.body.username);
-  if (!user) res.send('user does not exist'); 
-  else if (req.body.password !== user.password) res.send('wrong password');
+  if (!user) res.status(400).send('user does not exist');
+  else if (req.body.password !== user.password) res.status(400).send('wrong password');
   else {
-    temp.username = req.body.username;
+    temp.user = user.email;
     res.cookie('user_id', user.id);
     res.redirect('/urls');
   }
 });
 
 app.post('/logout', (req, res) => {
-  temp.username = null;
-  res.clearCookie('username');
+  temp.user = null;
+  res.clearCookie('user_id');
   res.redirect('/urls');
 });
 
@@ -130,7 +145,7 @@ app.post('/urls/:id/update', (req, res) => { // apparently needs to go before '/
 
 app.post('/urls/:id', (req, res) => {
   //
-  temp.shortURL = req.params.id; 
+  temp.shortURL = req.params.id;
   temp.longURL = urlDatabase[req.params.id];
   temp.edit = true;
   //
@@ -139,7 +154,7 @@ app.post('/urls/:id', (req, res) => {
 
 app.get('/urls/:shortURL', (req, res) => {
   //
-  temp.shortURL = req.params.shortURL; 
+  temp.shortURL = req.params.shortURL;
   temp.longURL = urlDatabase[req.params.shortURL];
   //
   res.render('urls_show', temp);
