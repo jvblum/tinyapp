@@ -91,12 +91,12 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  const user = usersDb.searchUsername(req.body.username);
-  if (!user) res.status(400).send('user does not exist');
-  else if (req.body.password !== user.password) res.status(400).send('wrong password');
+  const email = usersDb.searchEmail(req.body.email);
+  if (!email) res.status(403).send('email is not registered');
+  else if (req.body.password !== email.password) res.status(403).send('wrong password');
   else {
-    temp.user = user.email;
-    res.cookie('user_id', user.id);
+    temp.user = email.email;
+    res.cookie('user_id', email.id);
     res.redirect('/urls');
   }
 });
