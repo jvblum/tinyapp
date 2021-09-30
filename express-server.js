@@ -1,6 +1,7 @@
 const express = require('express');
-const bodyParser = require("body-parser");
+const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 
 const salt = bcrypt.genSaltSync(1.6543);
@@ -10,6 +11,10 @@ const PORT = 8080;
 //
 app.use(bodyParser.urlencoded({extended: true})); // bodyParser deprecated; possible alternative: "express.urlencoded";
 app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['dialectical'],
+}));
 app.set('view engine', 'ejs');
 
 // variables&&
@@ -105,7 +110,7 @@ app.post('/register', (req, res) => {
 
     temp.user = email;
     temp.cookie = id;
-    res.cookie('user_id', id);
+    req.session.user_id = id;
     res.redirect('/urls');
   }
 });
@@ -125,7 +130,7 @@ app.post('/login', (req, res) => {
   else {
     temp.user = email.email;
     temp.cookie = email.id;
-    res.cookie('user_id', email.id);
+    req.session.user_id = email.id;
     res.redirect('/urls');
   }
   console.log(usersDb);
