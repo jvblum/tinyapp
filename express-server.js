@@ -1,10 +1,10 @@
 const express = require('express');
 const bodyParser = require("body-parser");
-// const cookieParser = require('cookie-parser'); // disabled
+const cookieParser = require('cookie-parser'); 
 const app = express();
 const PORT = 8080;
 app.use(bodyParser.urlencoded({extended: true})); // bodyParser deprecated; possible alternative: "express.urlencoded";
-// app.use(cookieParser()); // disabled
+app.use(cookieParser()); 
 app.set('view engine', 'ejs');
 
 // variables&&
@@ -20,9 +20,18 @@ const generateRandomString = (length) => {
 };
 
 const urlDatabase = {
-  'b2xVn2': 'http://www.lighthouselabs.ca',
-  '9sm5xK': 'http://www.google.com',
-};
+    'b2xVn2': {
+      longURL:'http://www.lighthouselabs.ca'
+    },
+    '9sm5xK': {
+      longURL: 'http://www.google.com'
+    },
+  };
+
+// const urlDatabase = {
+//   'b2xVn2': 'http://www.lighthouselabs.ca',
+//   '9sm5xK': 'http://www.google.com',
+// };
 
 const usersDb = {
   tempId: {
@@ -121,14 +130,18 @@ app.get('/urls', (req, res) => {
   res.render('urls_index', temp);
 });
 
-app.get('/urls/new', (req, res) => {
-  res.render('urls_new', temp);
+app.post("/urls", (req, res) => {
+  if(!req.cookies.user_id) res.send('this feature is for registered users only')
+  else {
+    const shortURL = generateRandomString(6);
+    urlDatabase[shortURL] = {userID: req.cookies.user_id, shortURL: shortURL, longURL: req.body.longURL};
+    res.redirect(`/urls/${shortURL}`);
+  }
 });
 
-app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString(6);
-  urlDatabase[shortURL] = req.body.longURL;
-  res.redirect(`/urls/${shortURL}`);
+app.get('/urls/new', (req, res) => {
+  if(req.cookies.user_id) res.render('urls_new', temp);
+  else res.redirect('/login');
 });
 
 app.post('/urls/:shortURL/delete', (req, res) => {
@@ -138,15 +151,16 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 
 app.post('/urls/:id/update', (req, res) => { // apparently needs to go before '/urls/:id'
   //
-  urlDatabase[req.params.id] = req.body.longURL; // to-do - case if url doesn't go anywhere;
+  urlDatabase[req.params.id].longURL = req.body.longURL; // to-do - case if url doesn't go anywhere;
   //
+
   res.redirect(`/urls/${req.params.id}`);
 });
 
 app.post('/urls/:id', (req, res) => {
   //
   temp.shortURL = req.params.id;
-  temp.longURL = urlDatabase[req.params.id];
+  temp.longURL = urlDatabase[req.params.id].longURL;
   temp.edit = true;
   //
   res.render('urls_show', temp);
@@ -155,13 +169,14 @@ app.post('/urls/:id', (req, res) => {
 app.get('/urls/:shortURL', (req, res) => {
   //
   temp.shortURL = req.params.shortURL;
-  temp.longURL = urlDatabase[req.params.shortURL];
+  temp.longURL = urlDatabase[req.params.shortURL].longURL;
   //
   res.render('urls_show', temp);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  let longURL = urlDatabase[req.params.shortURL].longURL;
+  if (!longURL.includes('http')) longURL = 'http://' + longURL; // quick solution; code does not redirect links without http://; 
   res.redirect(longURL);
 });
 
