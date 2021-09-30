@@ -1,8 +1,13 @@
 const express = require('express');
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
+
+const salt = bcrypt.genSaltSync(1.6543);
 const app = express();
 const PORT = 8080;
+
+//
 app.use(bodyParser.urlencoded({extended: true})); // bodyParser deprecated; possible alternative: "express.urlencoded";
 app.use(cookieParser());
 app.set('view engine', 'ejs');
@@ -73,30 +78,34 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/register', (req, res) => {
-  const genId = generateRandomString(8);
-  const srcUser = usersDb.searchUsername(req.body.username);
-  const srcEmail = usersDb.searchEmail(req.body.email);
 
+  const userInUse = usersDb.searchUsername(req.body.username);
+  const emailInUse = usersDb.searchEmail(req.body.email);
+
+  const id = generateRandomString(8);
   const email = req.body.email;
   const username = req.body.username;
-  const password = req.body.password;
+  const password = bcrypt.hashSync(req.body.password, salt);
   
+
   if (!email || !username || !password) {
     res.status(400).send('please fill out the forms properly (i.e. users cannot submit empty forms)');
-  } else if (srcUser) {
-    res.status(400).send('username exists');
-  } else if (srcEmail) {
+  } else if (userInUse) {
+    res.status(400).send('username is already in use');
+  } else if (emailInUse) {
     res.status(400).send('email is already in use');
   } else {
-    usersDb[genId] = {
-      id: genId,
-      email: email,
-      username: username,
-      password: password
+
+    usersDb[id] = {
+      id,
+      email,
+      username,
+      password
     };
+
     temp.user = email;
-    temp.cookie = genId;
-    res.cookie('user_id', genId);
+    temp.cookie = id;
+    res.cookie('user_id', id);
     res.redirect('/urls');
   }
 });
@@ -108,15 +117,18 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
+
   const email = usersDb.searchEmail(req.body.email);
+
   if (!email) res.status(403).send('email is not registered');
-  else if (req.body.password !== email.password) res.status(403).send('wrong password');
+  else if (bcrypt.compareSync(email.password, req.body.password)) res.status(403).send('wrong password');
   else {
     temp.user = email.email;
     temp.cookie = email.id;
     res.cookie('user_id', email.id);
     res.redirect('/urls');
   }
+  console.log(usersDb);
 });
 
 app.post('/logout', (req, res) => {
