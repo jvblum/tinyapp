@@ -1,10 +1,10 @@
 const express = require('express');
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser'); 
+const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080;
 app.use(bodyParser.urlencoded({extended: true})); // bodyParser deprecated; possible alternative: "express.urlencoded";
-app.use(cookieParser()); 
+app.use(cookieParser());
 app.set('view engine', 'ejs');
 
 // variables&&
@@ -20,23 +20,19 @@ const generateRandomString = (length) => {
 };
 
 const urlDatabase = {
-    'b2xVn2': {
-      longURL:'http://www.lighthouselabs.ca'
-    },
-    '9sm5xK': {
-      longURL: 'http://www.google.com'
-    },
-  };
-
-// const urlDatabase = {
-//   'b2xVn2': 'http://www.lighthouselabs.ca',
-//   '9sm5xK': 'http://www.google.com',
-// };
+  'b2xVn2': {
+    longURL:'http://www.lighthouselabs.ca'
+  },
+  '9sm5xK': {
+    longURL: 'http://www.google.com'
+  },
+};
 
 const usersDb = {
   tempId: {
     id: null,
     username: null,
+    email: null,
     password: null
   },
   searchUsername(userReq) {
@@ -52,12 +48,23 @@ const usersDb = {
     return false;
   }
 };
+
+const urlsForUser = (userId, urlsDb) => {
+  const urls = [];
+  for (const url in urlsDb) {
+    if (urlsDb[url].userID === userId) urls.push(urlsDb[url].shortURL);
+  }
+  return urls;
+};
+
 const temp = {
   urls: urlDatabase,
   shortURL: null,
   longURL: null,
   user: null,
-  edit: false};
+  cookie: null,
+  edit: false
+};
 
 // register
 
@@ -88,6 +95,7 @@ app.post('/register', (req, res) => {
       password: password
     };
     temp.user = email;
+    temp.cookie = genId;
     res.cookie('user_id', genId);
     res.redirect('/urls');
   }
@@ -105,6 +113,7 @@ app.post('/login', (req, res) => {
   else if (req.body.password !== email.password) res.status(403).send('wrong password');
   else {
     temp.user = email.email;
+    temp.cookie = email.id;
     res.cookie('user_id', email.id);
     res.redirect('/urls');
   }
@@ -112,6 +121,7 @@ app.post('/login', (req, res) => {
 
 app.post('/logout', (req, res) => {
   temp.user = null;
+  temp.cookie = null;
   res.clearCookie('user_id');
   res.redirect('/urls');
 });
@@ -127,11 +137,12 @@ app.get('/urls.json', (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
-  res.render('urls_index', temp);
+  if (!req.cookies.user_id) res.redirect('/restricted');
+  else res.render('urls_index', temp);
 });
 
 app.post("/urls", (req, res) => {
-  if(!req.cookies.user_id) res.send('this feature is for registered users only')
+  if (!req.cookies.user_id) res.redirect('/restricted');
   else {
     const shortURL = generateRandomString(6);
     urlDatabase[shortURL] = {userID: req.cookies.user_id, shortURL: shortURL, longURL: req.body.longURL};
@@ -140,21 +151,26 @@ app.post("/urls", (req, res) => {
 });
 
 app.get('/urls/new', (req, res) => {
-  if(req.cookies.user_id) res.render('urls_new', temp);
-  else res.redirect('/login');
+  if (!req.cookies.user_id) res.redirect('/restricted');
+  else res.render('urls_new', temp);
 });
 
 app.post('/urls/:shortURL/delete', (req, res) => {
-  delete urlDatabase[req.params.shortURL];
-  res.redirect('/urls');
+  if (!urlsForUser(temp.cookie, urlDatabase).includes(req.params.shortURL)) {
+    res.status(403).send('does not have permission for request');
+  } else {
+    delete urlDatabase[req.params.shortURL];
+    res.redirect('/urls');
+  }
 });
 
 app.post('/urls/:id/update', (req, res) => { // apparently needs to go before '/urls/:id'
-  //
-  urlDatabase[req.params.id].longURL = req.body.longURL; // to-do - case if url doesn't go anywhere;
-  //
-
-  res.redirect(`/urls/${req.params.id}`);
+  if (!urlsForUser(temp.cookie, urlDatabase).includes(req.params.id)) {
+    res.status(403).send('does not have permission for request');
+  } else {
+    urlDatabase[req.params.id].longURL = req.body.longURL; // to-do - case if url doesn't go anywhere;
+    res.redirect(`/urls/${req.params.id}`);
+  }
 });
 
 app.post('/urls/:id', (req, res) => {
@@ -176,8 +192,12 @@ app.get('/urls/:shortURL', (req, res) => {
 
 app.get("/u/:shortURL", (req, res) => {
   let longURL = urlDatabase[req.params.shortURL].longURL;
-  if (!longURL.includes('http')) longURL = 'http://' + longURL; // quick solution; code does not redirect links without http://; 
+  if (!longURL.includes('http')) longURL = 'http://' + longURL; // quick solution; code does not redirect links without http://;
   res.redirect(longURL);
+});
+
+app.get('/restricted', (req, res) => {
+  res.render('restricted', temp);
 });
 
 app.listen(PORT, () => {
