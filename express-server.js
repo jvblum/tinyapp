@@ -24,8 +24,6 @@ app.use(cookieSession({
 }));
 app.use((req, res, next) => { // misc template handling
   
-  const temp = { urls: urlDatabase };
-  
   if (urlsForUser(req.session.userId, urlDatabase).includes(temp.shortURL)) {
     temp.edit = true;
   } else {
@@ -78,7 +76,6 @@ const temp = {
 
 app.get('/register', (req, res) => {
 
-  const temp = { user: null };
   res.render('register', temp);
 });
 
@@ -119,8 +116,6 @@ app.post('/register', (req, res) => {
 
 app.get('/login', (req, res) => {
 
-  const temp = { user: null};
-
   res.render('login', temp);
 });
 
@@ -147,6 +142,19 @@ app.post('/logout', (req, res) => {
 
 // urls
 
+app.get('/urls.json', (req, res) => {
+  res.json(urlDatabase);
+});
+
+app.get('/urls', (req, res) => {
+
+  if (!req.session.userId) {
+    return res.redirect('/restricted');
+  }
+
+  res.render('urls_index', temp);
+});
+
 app.post('/urls', (req, res) => {
   if (!req.session.userId) {
     return res.redirect('/restricted');
@@ -162,7 +170,7 @@ app.post('/urls', (req, res) => {
 
 });
 
-// urls/
+// urls/:
 
 app.post('/urls/:shortURL/delete', (req, res) => {
   
@@ -191,59 +199,9 @@ app.post('/urls/:id', (req, res) => {
   if (!doesThisUrlIdExist(req.params.id, urlDatabase)) {
     return res.status(404).send('error 404: this url does not exist');
   }
-
-  // template 
-
-  const temp = {};
-  temp.shortURL = req.params.id;
-  temp.longURL = urlDatabase[req.params.id].longURL;
-
-  if (req.session.userId) {
-    const email = usersDb[req.session.userId].email;
-    temp.user = email;
-  }
-
-  if (urlsForUser(req.session.userId, urlDatabase).includes(temp.shortURL)) {
-    temp.edit = true;
-  } else {
-    temp.edit = false;
-  }
-
-  //
-
   res.render('urls_show', temp);
 
 });
-
-app.get('/urls.json', (req, res) => {
-  res.json(urlDatabase);
-});
-
-app.get('/urls', (req, res) => {
-
-  if (!req.session.userId) {
-    return res.redirect('/restricted');
-  }
-
-  // const temp = {
-  //   urls: urlDatabase,
-  //   user: usersDb[req.session.userId].email
-  // };
-
-  res.render('urls_index', temp);
-});
-
-app.get('/urls/new', (req, res) => {
-
-  if (!req.session.userId) {
-    return res.redirect('/restricted');
-  }
-
-  const temp = { user: usersDb[req.session.userId].email };
-
-  res.render('urls_new', temp);
-});
-
 
 app.get('/urls/:shortURL', (req, res) => {
 
@@ -255,6 +213,15 @@ app.get('/urls/:shortURL', (req, res) => {
   temp.longURL = urlDatabase[req.params.shortURL].longURL;
   
   res.render('urls_show', temp);
+});
+
+app.get('/urls/new', (req, res) => {
+
+  if (!req.session.userId) {
+    return res.redirect('/restricted');
+  }
+
+  res.render('urls_new', temp);
 });
 
 //
