@@ -20,7 +20,7 @@ app.use(bodyParser.urlencoded({extended: true})); // bodyParser deprecated; poss
 app.use(cookieParser());
 app.use(cookieSession({
   name: 'session',
-  keys: ['fkcngevkecn cpf jkuvqtkecn ocvgtkcnkuo'],
+  keys: ['dialectical'],
 }));
 app.use((req, res, next) => { // misc template handling
   
