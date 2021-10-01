@@ -25,6 +25,7 @@
         </thead>
         <tbody>
           <% for(let url in urls) { %>
+            <% console.log(url, ",", urls[url].userID, "===", id ) %>
             <% if (urls[url].userID === id) { %> 
               <tr>
                 <td><%= url %></td> 

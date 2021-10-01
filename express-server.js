@@ -30,8 +30,19 @@ app.use((req, res, next) => { // misc template handling
     temp.edit = false;
   }
 
-  if (!temp.user) {
-    req.session.user_id = null;
+
+  // if (!temp.user) {
+  //   req.session.userId = null; // deletes cookie; logs out; 
+  // }
+
+  if (req.session.userId) {
+    temp.id = req.session.userId;
+    if (usersDb[req.session.userId]) {
+      temp.user = usersDb[req.session.userId].email;
+    }
+  } else {
+    temp.id = null;
+    temp.user = null;
   }
 
   next();
@@ -62,8 +73,8 @@ const temp = {
   shortURL: null,
   longURL: null,
   user: null,
-  id: null,
-  edit: null // dead
+  edit: null,
+  id: null
 };
 
 // register
@@ -100,9 +111,8 @@ app.post('/register', (req, res) => {
     password
   };
 
-  temp.user = email;
-  temp.id = id;
-  req.session.user_id = id;
+  // temp.user = email;
+  req.session.userId = id;
   res.redirect('/urls');
   
 });
@@ -124,17 +134,15 @@ app.post('/login', (req, res) => {
     return res.status(403).send('wrong password');
   }
 
-  temp.user = user.email;
-  temp.id = user.id;
-  req.session.user_id = user.id;
+  // temp.user = user.email;
+  req.session.userId = user.id;
   res.redirect('/urls');
     
 });
 
 app.post('/logout', (req, res) => {
   temp.user = null;
-  temp.id = null;
-  req.session.user_id = null;
+  req.session.userId = null;
   res.redirect('/urls');
 });
 
@@ -149,16 +157,18 @@ app.get('/urls.json', (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
-  if (!req.session.user_id) res.redirect('/restricted');
+  if (!req.session.userId) {
+    res.redirect('/restricted');
+  }
   else res.render('urls_index', temp);
 });
 
 app.post('/urls', (req, res) => {
-  if (!req.session.user_id) {
+  if (!req.session.userId) {
     return res.redirect('/restricted');
   }
 
-  const id = getUserByEmail(temp.user, usersDb).id;
+  const id = req.session.userId;
   const shortURL = generateRandomString(6);
   urlDatabase[shortURL] = {
     userID: id,
@@ -170,14 +180,14 @@ app.post('/urls', (req, res) => {
 });
 
 app.get('/urls/new', (req, res) => {
-  if (!req.session.user_id) {
+  if (!req.session.userId) {
     return res.redirect('/restricted');
   }
   res.render('urls_new', temp);
 });
 
 app.post('/urls/:shortURL/delete', (req, res) => {
-  if (!urlsForUser(temp.id, urlDatabase).includes(req.params.shortURL)) {
+  if (!urlsForUser(req.session.userId, urlDatabase).includes(req.params.shortURL)) {
     return res.status(403).send('error 403: does not have permission for request');
   } 
 
