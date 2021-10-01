@@ -31,13 +31,13 @@ app.use((req, res, next) => { // misc template handling
   }
 
   if (req.session.userId) {
-    temp.id = req.session.userId;
+    temp.id = req.session.userId; // for index generation
     if (usersDb[req.session.userId]) {
-      temp.user = usersDb[req.session.userId].email;
+      temp.user = usersDb[req.session.userId].email; // for display name
     }
   } else {
-    temp.id = null;
-    temp.user = null;
+    temp.id = null; 
+    temp.user = null; 
   }
 
   next();
@@ -194,9 +194,11 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 
 app.post('/urls/:id/update', (req, res) => { // apparently needs to go before '/urls/:id'
   
-  if (!urlsForUser(temp.id, urlDatabase).includes(req.params.id)) {
+  if (!urlsForUser(req.session.userId, urlDatabase).includes(req.params.id)) {
    return res.status(403).send('error 403: does not have permission for request');
   }
+
+  temp.edit = true;
 
   urlDatabase[req.params.id].longURL = req.body.longURL; 
   res.redirect(`/urls/${req.params.id}`);
@@ -235,7 +237,7 @@ app.get("/u/:shortURL", (req, res) => {
   let longURL = urlDatabase[req.params.shortURL].longURL;
   if (!longURL.includes('http')) {
     longURL = 'http://' + longURL;
-  }// quick solution; code does not redirect links without http://;
+  }// quick solution // code does not redirect links without http://;
   res.redirect(longURL);
 });
 
@@ -257,5 +259,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+  console.log(`TinyApp listening on port ${PORT}!`);
 });
