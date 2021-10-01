@@ -249,7 +249,6 @@ app.get('/urls/new', (req, res) => {
 //
 
 app.get('/restricted', (req, res) => {
-  const temp = { user: null };
   res.render('restricted', temp);
 });
 
