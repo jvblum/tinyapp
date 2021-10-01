@@ -172,6 +172,15 @@ app.post('/urls', (req, res) => {
 
 // urls/:
 
+app.get('/urls/new', (req, res) => {
+
+  if (!req.session.userId) {
+    return res.redirect('/restricted');
+  }
+
+  res.render('urls_new', temp);
+});
+
 app.post('/urls/:shortURL/delete', (req, res) => {
   
   if (!urlsForUser(req.session.userId, urlDatabase).includes(req.params.shortURL)) {
@@ -213,15 +222,6 @@ app.get('/urls/:shortURL', (req, res) => {
   temp.longURL = urlDatabase[req.params.shortURL].longURL;
   
   res.render('urls_show', temp);
-});
-
-app.get('/urls/new', (req, res) => {
-
-  if (!req.session.userId) {
-    return res.redirect('/restricted');
-  }
-
-  res.render('urls_new', temp);
 });
 
 //
