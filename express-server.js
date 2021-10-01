@@ -32,6 +32,16 @@ app.use((req, res, next) => { // misc template handling
     temp.edit = false;
   }
 
+  if (req.session.userId) {
+    temp.id = req.session.userId;
+    if (usersDb[req.session.userId]) {
+      temp.user = usersDb[req.session.userId].email;
+    }
+  } else {
+    temp.id = null;
+    temp.user = null;
+  }
+
   next();
 });
 app.set('view engine', 'ejs');
@@ -55,14 +65,14 @@ const usersDb = {
   }
 };
 
-// const temp = {
-//   urls: urlDatabase,
-//   shortURL: null,
-//   longURL: null,
-//   user: null,
-//   id: null,
-//   edit: null // dead
-// };
+const temp = {
+  urls: urlDatabase,
+  shortURL: null,
+  longURL: null,
+  user: null,
+  edit: null,
+  id: null
+};
 
 // register
 
@@ -84,7 +94,7 @@ app.post('/register', (req, res) => {
   
 
   if (!email || !username || !password) {
-    res.status(400).send('please fill out the forms properly (i.e. users cannot submit empty forms)');
+    return res.status(400).send('please fill out the forms properly (i.e. users cannot submit empty forms)');
   } 
   if (userInUse) {
     return res.status(400).send('username is already in use');
@@ -152,8 +162,10 @@ app.post('/urls', (req, res) => {
 
 });
 
-app.post('/urls/:shortURL/delete', (req, res) => {
+// urls/
 
+app.post('/urls/:shortURL/delete', (req, res) => {
+  
   if (!urlsForUser(req.session.userId, urlDatabase).includes(req.params.shortURL)) {
     return res.status(403).send('error 403: does not have permission for request');
   } 
@@ -163,9 +175,9 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 
 });
 
-app.post('/urls/:id/update', (req, res) => { 
+app.post('/urls/:id/update', (req, res) => { // apparently needs to go before '/urls/:id'
   
-  if (!urlsForUser(req.session.userId, urlDatabase).includes(req.params.id)) {
+  if (!urlsForUser(temp.id, urlDatabase).includes(req.params.id)) {
    return res.status(403).send('error 403: does not have permission for request');
   }
 
@@ -239,22 +251,9 @@ app.get('/urls/:shortURL', (req, res) => {
     return res.status(404).send('error 404: this url does not exist');
   }
 
-  const temp = {};
-
   temp.shortURL = req.params.shortURL;
   temp.longURL = urlDatabase[req.params.shortURL].longURL;
-
-  if (req.session.userId) {
-    const email = usersDb[req.session.userId].email;
-    temp.user = email;
-  }
   
-  if (urlsForUser(req.session.userId, urlDatabase).includes(temp.shortURL)) {
-    temp.edit = true;
-  } else {
-    temp.edit = false;
-  }
-
   res.render('urls_show', temp);
 });
 
@@ -269,14 +268,26 @@ app.get("/u/:shortURL", (req, res) => {
   let longURL = urlDatabase[req.params.shortURL].longURL;
   if (!longURL.includes('http')) {
     longURL = 'http://' + longURL;
-  } // dirty solution; code does not redirect links without http://;
-
+  }// quick solution; code does not redirect links without http://;
   res.redirect(longURL);
 });
+
+app.get('/urls/new', (req, res) => {
+  if (!req.session.userId) {
+    return res.redirect('/restricted');
+  }
+  res.render('urls_new', temp);
+});
+
+//
 
 app.get('/restricted', (req, res) => {
   const temp = { user: null };
   res.render('restricted', temp);
+});
+
+app.get('/', (req, res) => {
+  res.redirect('/urls');
 });
 
 app.listen(PORT, () => {
