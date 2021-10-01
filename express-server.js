@@ -22,16 +22,18 @@ app.use(cookieSession({
   name: 'session',
   keys: ['fkcngevkecn cpf jkuvqtkecn ocvgtkcnkuo'],
 }));
-// app.use((req, res, next) => { // misc template handling
+app.use((req, res, next) => { // misc template handling
   
-//   if (urlsForUser(req.session.userId, urlDatabase).includes(temp.shortURL)) {
-//     temp.edit = true;
-//   } else {
-//     temp.edit = false;
-//   }
+  const temp = { urls: urlDatabase };
+  
+  if (urlsForUser(req.session.userId, urlDatabase).includes(temp.shortURL)) {
+    temp.edit = true;
+  } else {
+    temp.edit = false;
+  }
 
-//   next();
-// });
+  next();
+});
 app.set('view engine', 'ejs');
 
 // variables&&
@@ -211,7 +213,10 @@ app.get('/urls', (req, res) => {
     return res.redirect('/restricted');
   }
 
-  const temp = { user: usersDb[req.session.userId].email };
+  // const temp = {
+  //   urls: urlDatabase,
+  //   user: usersDb[req.session.userId].email
+  // };
 
   res.render('urls_index', temp);
 });
