@@ -25,4 +25,5 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ----
 
-#### *** incomplete project
+#### ***  student project
+#### *** feature incomplete
