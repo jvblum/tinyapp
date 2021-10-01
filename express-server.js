@@ -95,7 +95,7 @@ app.post('/register', (req, res) => {
   
 
   if (!email || !username || !password) {
-    res.status(400).send('please fill out the forms properly (i.e. users cannot submit empty forms)');
+    return res.status(400).send('please fill out the forms properly (i.e. users cannot submit empty forms)');
   } 
   if (userInUse) {
     return res.status(400).send('username is already in use');
@@ -134,7 +134,6 @@ app.post('/login', (req, res) => {
     return res.status(403).send('wrong password');
   }
 
-  // temp.user = user.email;
   req.session.userId = user.id;
   res.redirect('/urls');
     
@@ -146,24 +145,23 @@ app.post('/logout', (req, res) => {
   res.redirect('/urls');
 });
 
-//
-
-app.get('/', (req, res) => {
-  res.redirect('/urls');
-});
+// urls
 
 app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
 });
 
 app.get('/urls', (req, res) => {
+  
   if (!req.session.userId) {
     res.redirect('/restricted');
   }
+
   else res.render('urls_index', temp);
 });
 
 app.post('/urls', (req, res) => {
+  
   if (!req.session.userId) {
     return res.redirect('/restricted');
   }
@@ -179,14 +177,10 @@ app.post('/urls', (req, res) => {
 
 });
 
-app.get('/urls/new', (req, res) => {
-  if (!req.session.userId) {
-    return res.redirect('/restricted');
-  }
-  res.render('urls_new', temp);
-});
+// urls/
 
 app.post('/urls/:shortURL/delete', (req, res) => {
+  
   if (!urlsForUser(req.session.userId, urlDatabase).includes(req.params.shortURL)) {
     return res.status(403).send('error 403: does not have permission for request');
   } 
@@ -197,6 +191,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 });
 
 app.post('/urls/:id/update', (req, res) => { // apparently needs to go before '/urls/:id'
+  
   if (!urlsForUser(temp.id, urlDatabase).includes(req.params.id)) {
    return res.status(403).send('error 403: does not have permission for request');
   }
@@ -224,21 +219,36 @@ app.get('/urls/:shortURL', (req, res) => {
   if (!doesThisUrlIdExist(req.params.shortURL, urlDatabase)) {
     return res.status(404).send('error 404: this url does not exist');
   }
-  //
+
   temp.shortURL = req.params.shortURL;
   temp.longURL = urlDatabase[req.params.shortURL].longURL;
-  //
+  
   res.render('urls_show', temp);
 });
 
 app.get("/u/:shortURL", (req, res) => {
   let longURL = urlDatabase[req.params.shortURL].longURL;
-  if (!longURL.includes('http')) longURL = 'http://' + longURL; // quick solution; code does not redirect links without http://;
+  if (!longURL.includes('http')) {
+    longURL = 'http://' + longURL;
+  }// quick solution; code does not redirect links without http://;
   res.redirect(longURL);
 });
 
+app.get('/urls/new', (req, res) => {
+  if (!req.session.userId) {
+    return res.redirect('/restricted');
+  }
+  res.render('urls_new', temp);
+});
+
+//
+
 app.get('/restricted', (req, res) => {
   res.render('restricted', temp);
+});
+
+app.get('/', (req, res) => {
+  res.redirect('/urls');
 });
 
 app.listen(PORT, () => {
