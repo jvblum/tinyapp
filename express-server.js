@@ -1,6 +1,5 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const {
@@ -16,8 +15,7 @@ const app = express();
 const PORT = 8080;
 
 //
-app.use(bodyParser.urlencoded({extended: true})); // bodyParser deprecated; possible alternative: "express.urlencoded";
-app.use(cookieParser());
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieSession({
   name: 'session',
   keys: ['fkcngevkecn cpf jkuvqtkecn ocvgtkcnkuo'],
@@ -36,8 +34,8 @@ app.use((req, res, next) => { // misc template handling
       temp.user = usersDb[req.session.userId].email; // for display name
     }
   } else {
-    temp.id = null; 
-    temp.user = null; 
+    temp.id = null;
+    temp.user = null;
   }
 
   next();
@@ -92,10 +90,10 @@ app.post('/register', (req, res) => {
 
   if (!email || !username || !password) {
     return res.status(400).send('please fill out the forms properly (i.e. users cannot submit empty forms)');
-  } 
+  }
   if (userInUse) {
     return res.status(400).send('username is already in use');
-  } 
+  }
   if (emailInUse) {
     return res.status(400).send('email is already in use');
   }
@@ -185,7 +183,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   
   if (!urlsForUser(req.session.userId, urlDatabase).includes(req.params.shortURL)) {
     return res.status(403).send('error 403: does not have permission for request');
-  } 
+  }
 
   delete urlDatabase[req.params.shortURL];
   res.redirect('/urls');
@@ -195,12 +193,12 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 app.post('/urls/:id/update', (req, res) => { // apparently needs to go before '/urls/:id'
   
   if (!urlsForUser(req.session.userId, urlDatabase).includes(req.params.id)) {
-   return res.status(403).send('error 403: does not have permission for request');
+    return res.status(403).send('error 403: does not have permission for request');
   }
 
   temp.edit = true;
 
-  urlDatabase[req.params.id].longURL = req.body.longURL; 
+  urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect(`/urls/${req.params.id}`);
   
 });
