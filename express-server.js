@@ -22,20 +22,16 @@ app.use(cookieSession({
   name: 'session',
   keys: ['fkcngevkecn cpf jkuvqtkecn ocvgtkcnkuo'],
 }));
-app.use((req, res, next) => { // misc template handling
+// app.use((req, res, next) => { // misc template handling
   
-  if (urlsForUser(temp.id, urlDatabase).includes(temp.shortURL)) {
-    temp.edit = true;
-  } else {
-    temp.edit = false;
-  }
+//   if (urlsForUser(req.session.userId, urlDatabase).includes(temp.shortURL)) {
+//     temp.edit = true;
+//   } else {
+//     temp.edit = false;
+//   }
 
-  if (!temp.user) {
-    req.session.user_id = null;
-  }
-
-  next();
-});
+//   next();
+// });
 app.set('view engine', 'ejs');
 
 // variables&&
@@ -57,18 +53,20 @@ const usersDb = {
   }
 };
 
-const temp = {
-  urls: urlDatabase,
-  shortURL: null,
-  longURL: null,
-  user: null,
-  id: null,
-  edit: null // dead
-};
+// const temp = {
+//   urls: urlDatabase,
+//   shortURL: null,
+//   longURL: null,
+//   user: null,
+//   id: null,
+//   edit: null // dead
+// };
 
 // register
 
 app.get('/register', (req, res) => {
+
+  const temp = { user: null };
   res.render('register', temp);
 });
 
@@ -100,9 +98,7 @@ app.post('/register', (req, res) => {
     password
   };
 
-  temp.user = email;
-  temp.id = id;
-  req.session.user_id = id;
+  req.session.userId = id;
   res.redirect('/urls');
   
 });
@@ -110,6 +106,9 @@ app.post('/register', (req, res) => {
 // login, logout
 
 app.get('/login', (req, res) => {
+
+  const temp = { user: null};
+
   res.render('login', temp);
 });
 
@@ -124,44 +123,26 @@ app.post('/login', (req, res) => {
     return res.status(403).send('wrong password');
   }
 
-  temp.user = user.email;
-  temp.id = user.id;
-  req.session.user_id = user.id;
+  req.session.userId = user.id;
   res.redirect('/urls');
     
 });
 
 app.post('/logout', (req, res) => {
-  temp.user = null;
-  temp.id = null;
-  req.session.user_id = null;
+  req.session.userId = null;
   res.redirect('/urls');
 });
 
-//
-
-app.get('/', (req, res) => {
-  res.redirect('/urls');
-});
-
-app.get('/urls.json', (req, res) => {
-  res.json(urlDatabase);
-});
-
-app.get('/urls', (req, res) => {
-  if (!req.session.user_id) res.redirect('/restricted');
-  else res.render('urls_index', temp);
-});
+// urls
 
 app.post('/urls', (req, res) => {
-  if (!req.session.user_id) {
+  if (!req.session.userId) {
     return res.redirect('/restricted');
   }
 
-  const id = getUserByEmail(temp.user, usersDb).id;
   const shortURL = generateRandomString(6);
   urlDatabase[shortURL] = {
-    userID: id,
+    userID: req.session.userId,
     shortURL,
     longURL: req.body.longURL
   };
@@ -169,15 +150,9 @@ app.post('/urls', (req, res) => {
 
 });
 
-app.get('/urls/new', (req, res) => {
-  if (!req.session.user_id) {
-    return res.redirect('/restricted');
-  }
-  res.render('urls_new', temp);
-});
-
 app.post('/urls/:shortURL/delete', (req, res) => {
-  if (!urlsForUser(temp.id, urlDatabase).includes(req.params.shortURL)) {
+
+  if (!urlsForUser(req.session.userId, urlDatabase).includes(req.params.shortURL)) {
     return res.status(403).send('error 403: does not have permission for request');
   } 
 
@@ -186,8 +161,9 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 
 });
 
-app.post('/urls/:id/update', (req, res) => { // apparently needs to go before '/urls/:id'
-  if (!urlsForUser(temp.id, urlDatabase).includes(req.params.id)) {
+app.post('/urls/:id/update', (req, res) => { 
+  
+  if (!urlsForUser(req.session.userId, urlDatabase).includes(req.params.id)) {
    return res.status(403).send('error 403: does not have permission for request');
   }
 
@@ -202,32 +178,99 @@ app.post('/urls/:id', (req, res) => {
     return res.status(404).send('error 404: this url does not exist');
   }
 
+  // template 
+
+  const temp = {};
   temp.shortURL = req.params.id;
   temp.longURL = urlDatabase[req.params.id].longURL;
-  
+
+  if (req.session.userId) {
+    const email = usersDb[req.session.userId].email;
+    temp.user = email;
+  }
+
+  if (urlsForUser(req.session.userId, urlDatabase).includes(temp.shortURL)) {
+    temp.edit = true;
+  } else {
+    temp.edit = false;
+  }
+
+  //
+
   res.render('urls_show', temp);
 
 });
+
+app.get('/urls.json', (req, res) => {
+  res.json(urlDatabase);
+});
+
+app.get('/urls', (req, res) => {
+
+  if (!req.session.userId) {
+    return res.redirect('/restricted');
+  }
+
+  const temp = { user: usersDb[req.session.userId].email };
+
+  res.render('urls_index', temp);
+});
+
+app.get('/urls/new', (req, res) => {
+
+  if (!req.session.userId) {
+    return res.redirect('/restricted');
+  }
+
+  const temp = { user: usersDb[req.session.userId].email };
+
+  res.render('urls_new', temp);
+});
+
 
 app.get('/urls/:shortURL', (req, res) => {
 
   if (!doesThisUrlIdExist(req.params.shortURL, urlDatabase)) {
     return res.status(404).send('error 404: this url does not exist');
   }
-  //
+
+  const temp = {};
+
   temp.shortURL = req.params.shortURL;
   temp.longURL = urlDatabase[req.params.shortURL].longURL;
-  //
+
+  if (req.session.userId) {
+    const email = usersDb[req.session.userId].email;
+    temp.user = email;
+  }
+  
+  if (urlsForUser(req.session.userId, urlDatabase).includes(temp.shortURL)) {
+    temp.edit = true;
+  } else {
+    temp.edit = false;
+  }
+
   res.render('urls_show', temp);
 });
 
+//
+
+app.get('/', (req, res) => {
+  res.redirect('/urls');
+});
+
+
 app.get("/u/:shortURL", (req, res) => {
   let longURL = urlDatabase[req.params.shortURL].longURL;
-  if (!longURL.includes('http')) longURL = 'http://' + longURL; // quick solution; code does not redirect links without http://;
+  if (!longURL.includes('http')) {
+    longURL = 'http://' + longURL;
+  } // dirty solution; code does not redirect links without http://;
+
   res.redirect(longURL);
 });
 
 app.get('/restricted', (req, res) => {
+  const temp = { user: null };
   res.render('restricted', temp);
 });
 
