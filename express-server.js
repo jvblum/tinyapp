@@ -119,6 +119,10 @@ app.get('/login', (req, res) => {
 
 app.post('/login', (req, res) => {
 
+  if (!req.body.email || !req.body.password) {
+    return res.status(400).send('please fill out the forms properly (i.e. users cannot submit empty forms)');
+  }
+
   const user = getUserByEmail(req.body.email, usersDb);
 
   if (!user) {
@@ -173,7 +177,7 @@ app.post('/urls', (req, res) => {
 app.get('/urls/new', (req, res) => {
 
   if (!req.session.userId) {
-    return res.redirect('/restricted');
+    return res.redirect('/login');
   }
 
   res.render('urls_new', temp);
