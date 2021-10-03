@@ -1,11 +1,3 @@
-const getUserByUsername = (userReq, usersDb) => {
-  for (const user in usersDb) {
-    if (usersDb[user].username === userReq)
-      return usersDb[user]; // return user object
-  }
-  return false;
-};
-
 const getUserByEmail = (emailReq, usersDb) => {
   for (const user in usersDb) {
     if (usersDb[user].email === emailReq)
@@ -42,7 +34,6 @@ const doesThisUrlIdExist = (urlId, urlDb) => {
 };
 
 module.exports = {
-  getUserByUsername,
   getUserByEmail,
   urlsForUser,
   generateRandomString,

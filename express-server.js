@@ -4,7 +4,6 @@ const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const {
   getUserByEmail,
-  getUserByUsername,
   urlsForUser,
   generateRandomString,
   doesThisUrlIdExist
@@ -55,7 +54,6 @@ const urlDatabase = {
 const usersDb = {
   tempId: {
     id: null,
-    username: null,
     email: null,
     password: null
   }
@@ -79,21 +77,17 @@ app.get('/register', (req, res) => {
 
 app.post('/register', (req, res) => {
 
-  const userInUse = getUserByUsername(req.body.username, usersDb);
   const emailInUse = getUserByEmail(req.body.email, usersDb);
 
   const id = generateRandomString(8);
   const email = req.body.email;
-  const username = req.body.username;
   const password = bcrypt.hashSync(req.body.password, salt);
   
 
-  if (!email || !username || !password) {
+  if (!email || !password) {
     return res.status(400).send('please fill out the forms properly (i.e. users cannot submit empty forms)');
   }
-  if (userInUse) {
-    return res.status(400).send('username is already in use');
-  }
+
   if (emailInUse) {
     return res.status(400).send('email is already in use');
   }
@@ -101,7 +95,6 @@ app.post('/register', (req, res) => {
   usersDb[id] = {
     id,
     email,
-    username,
     password
   };
 
