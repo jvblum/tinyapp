@@ -21,6 +21,7 @@ app.use(cookieSession({
 }));
 app.use((req, res, next) => { // misc template handling
   
+  // for handling a form in urls_new
   if (urlsForUser(req.session.userId, urlDatabase).includes(temp.shortURL)) {
     temp.edit = true;
   } else {
@@ -28,9 +29,9 @@ app.use((req, res, next) => { // misc template handling
   }
 
   if (req.session.userId) {
-    temp.id = req.session.userId; // for index generation
+    temp.id = req.session.userId; // for index generation (urls_index)
     if (usersDb[req.session.userId]) {
-      temp.user = usersDb[req.session.userId].email; // for display name
+      temp.user = usersDb[req.session.userId].email; // for display name (header)
     }
   } else {
     temp.id = null;
@@ -39,6 +40,7 @@ app.use((req, res, next) => { // misc template handling
 
   next();
 });
+
 app.set('view engine', 'ejs');
 
 // variables&&
@@ -59,6 +61,7 @@ const usersDb = {
   }
 };
 
+// template variables
 const temp = {
   urls: urlDatabase,
   shortURL: null,
@@ -150,7 +153,7 @@ app.get('/urls', (req, res) => {
   res.render('urls_index', temp);
 });
 
-app.post('/urls', (req, res) => {
+app.post('/urls', (req, res) => { // create new shortURL
   if (!req.session.userId) {
     return res.redirect('/restricted');
   }
@@ -187,7 +190,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 
 });
 
-app.post('/urls/:id/update', (req, res) => { // apparently needs to go before '/urls/:id'
+app.post('/urls/:id/update', (req, res) => {
   
   if (!urlsForUser(req.session.userId, urlDatabase).includes(req.params.id)) {
     return res.status(403).send('error 403: does not have permission for request');
@@ -198,7 +201,7 @@ app.post('/urls/:id/update', (req, res) => { // apparently needs to go before '/
   urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect(`/urls/${req.params.id}`);
   
-});
+}); // needs to go before post requestion for '/urls/:id'
 
 app.post('/urls/:id', (req, res) => {
   
@@ -243,7 +246,7 @@ app.get('/urls/new', (req, res) => {
   res.render('urls_new', temp);
 });
 
-//
+// other routes
 
 app.get('/restricted', (req, res) => {
   res.render('restricted', temp);
@@ -252,6 +255,8 @@ app.get('/restricted', (req, res) => {
 app.get('/', (req, res) => {
   res.redirect('/urls');
 });
+
+//
 
 app.listen(PORT, () => {
   console.log(`TinyApp listening on port ${PORT}!`);

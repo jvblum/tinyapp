@@ -1,10 +1,13 @@
+// takes email & user database; returns user object or false;
 const getUserByEmail = (emailReq, usersDb) => {
   for (const user in usersDb) {
     if (usersDb[user].email === emailReq)
-      return usersDb[user]; // return user object
+      return usersDb[user]; 
   }
   return false;
 };
+
+// takes userId & urls database; returns array of shortURL that corresponds with userId
 
 const urlsForUser = (userId, urlsDb) => {
   const urls = [];
@@ -14,7 +17,8 @@ const urlsForUser = (userId, urlsDb) => {
   return urls;
 };
 
-
+// takes number; returns string with the number as its length; 
+// used for generating shortURL and userId;
 const generateRandomString = (length) => {
   let res = '';
   const chars = 'pyfgcrlaoeuidhtnsqjkxbmwvzPYFGCRLAOEUIDHTNSQJKXBMWVZ1234567890';
@@ -25,6 +29,7 @@ const generateRandomString = (length) => {
   return res;
 };
 
+// takes urlId and urls database; checks if url is in database;
 const doesThisUrlIdExist = (urlId, urlDb) => {
   for (const url in urlDb) {
     if (url === urlId)
