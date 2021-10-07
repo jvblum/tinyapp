@@ -87,7 +87,7 @@ app.post('/register', (req, res) => {
   const password = bcrypt.hashSync(req.body.password, salt);
   
 
-  if (!email || !password) {
+  if (!req.body.email || !req.body.password) {
     return res.status(400).send('please fill out the forms properly (i.e. users cannot submit empty forms)');
   }
 
