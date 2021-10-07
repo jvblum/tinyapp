@@ -214,6 +214,10 @@ app.post('/urls/:id', (req, res) => {
 
 app.get('/urls/:shortURL', (req, res) => {
 
+  if (!urlsForUser(req.session.userId, urlDatabase).includes(req.params.shortURL)) {
+    return res.status(403).send('error 403: does not have permission for request');
+  }
+  
   if (!doesThisUrlIdExist(req.params.shortURL, urlDatabase)) {
     return res.status(404).send('error 404: this url does not exist');
   }
