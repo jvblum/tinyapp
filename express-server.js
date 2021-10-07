@@ -139,15 +139,16 @@ app.get('/urls.json', (req, res) => {
 app.get('/urls', (req, res) => {
 
   if (!req.session.userId) {
-    return res.redirect('/restricted');
+    return res.redirect('/login');
   }
 
   res.render('urls_index', temp);
 });
 
 app.post('/urls', (req, res) => { // create new shortURL
+  
   if (!req.session.userId) {
-    return res.redirect('/restricted');
+    return res.status(403).send('error 403: does not have permission for request');
   }
 
   const shortURL = generateRandomString(6);
@@ -235,16 +236,12 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get('/urls/new', (req, res) => {
   if (!req.session.userId) {
-    return res.redirect('/restricted');
+    return res.status(403).send('error 403: does not have permission for request');
   }
   res.render('urls_new', temp);
 });
 
 // other routes
-
-app.get('/restricted', (req, res) => {
-  res.render('restricted', temp);
-});
 
 app.get('/', (req, res) => {
   res.redirect('/urls');
