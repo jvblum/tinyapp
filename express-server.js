@@ -20,13 +20,6 @@ app.use(cookieSession({
   keys: ['fkcngevkecn cpf jkuvqtkecn ocvgtkcnkuo'],
 }));
 app.use((req, res, next) => { // misc template handling
-  
-  // for handling a form in urls_new
-  if (urlsForUser(req.session.userId, urlDatabase).includes(temp.shortURL)) {
-    temp.edit = true;
-  } else {
-    temp.edit = false;
-  }
 
   if (req.session.userId) {
     temp.id = req.session.userId; // for index generation (urls_index)
@@ -67,7 +60,6 @@ const temp = {
   shortURL: null,
   longURL: null,
   user: null,
-  edit: null,
   id: null
 };
 
@@ -195,8 +187,6 @@ app.post('/urls/:id/update', (req, res) => {
   if (!urlsForUser(req.session.userId, urlDatabase).includes(req.params.id)) {
     return res.status(403).send('error 403: does not have permission for request');
   }
-
-  temp.edit = true;
 
   urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect(`/urls/${req.params.id}`);
