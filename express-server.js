@@ -102,6 +102,11 @@ app.post('/register', (req, res) => {
 
 app.get('/login', (req, res) => {
 
+  // if user is logged in: redirects to /urls
+  if (req.session.userId) {
+    return res.redirect('/urls');
+  }
+
   res.render('login', temp);
 });
 
@@ -138,15 +143,17 @@ app.get('/urls.json', (req, res) => {
 
 app.get('/urls', (req, res) => {
 
+  // if user is not logged in: returns HTML with a relevant error message
   if (!req.session.userId) {
-    return res.redirect('/login');
+    return res.redirect('/restricted');
   }
 
   res.render('urls_index', temp);
 });
 
 app.post('/urls', (req, res) => { // create new shortURL
-  
+
+  // if user is not logged in...
   if (!req.session.userId) {
     return res.status(403).send('error 403: does not have permission for request');
   }
@@ -165,6 +172,7 @@ app.post('/urls', (req, res) => { // create new shortURL
 
 app.get('/urls/new', (req, res) => {
 
+  // if user is not logged in: redirects to the /login page
   if (!req.session.userId) {
     return res.redirect('/login');
   }
@@ -174,6 +182,12 @@ app.get('/urls/new', (req, res) => {
 
 app.post('/urls/:shortURL/delete', (req, res) => {
   
+  // if user is not logged in...
+  if (!req.session.userId) {
+    return res.status(403).send('error 403: does not have permission for request');
+  }
+  
+  // if user is logged it but does not own the URL for the given ID...
   if (!urlsForUser(req.session.userId, urlDatabase).includes(req.params.shortURL)) {
     return res.status(403).send('error 403: does not have permission for request');
   }
@@ -192,9 +206,14 @@ app.post('/urls/:id/update', (req, res) => {
   urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect(`/urls/${req.params.id}`);
   
-}); // needs to go before post requestion for '/urls/:id'
+}); // needs to go before post requesting for '/urls/:id'
 
 app.post('/urls/:id', (req, res) => {
+
+  // if user is not logged in...
+  if (!req.session.userId) {
+    return res.status(403).send('error 403: does not have permission for request');
+  }
   
   if (!doesThisUrlIdExist(req.params.id, urlDatabase)) {
     return res.status(404).send('error 404: this url does not exist');
@@ -205,10 +224,17 @@ app.post('/urls/:id', (req, res) => {
 
 app.get('/urls/:shortURL', (req, res) => {
 
+  // if user is not logged in: returns HTML with a relevant error message
+  if (!req.session.userId) {
+    return res.redirect('/restricted');
+  }
+
+  // if user is logged it but does not own the URL with the given ID: returns HTML with a relevant error message
   if (!urlsForUser(req.session.userId, urlDatabase).includes(req.params.shortURL)) {
     return res.status(403).send('error 403: does not have permission for request');
   }
   
+  // if a URL for the given ID does not exist: returns HTML with a relevant error message
   if (!doesThisUrlIdExist(req.params.shortURL, urlDatabase)) {
     return res.status(404).send('error 404: this url does not exist');
   }
@@ -221,30 +247,32 @@ app.get('/urls/:shortURL', (req, res) => {
 
 //
 
-app.get('/', (req, res) => {
-  res.redirect('/urls');
-});
-
-
-app.get("/u/:shortURL", (req, res) => {
+app.get('/u/:shortURL', (req, res) => {
   let longURL = urlDatabase[req.params.shortURL].longURL;
   if (!longURL.includes('http')) {
     longURL = 'http://' + longURL;
   }// quick solution // code does not redirect links without http://;
-  res.redirect(longURL);
-});
 
-app.get('/urls/new', (req, res) => {
-  if (!req.session.userId) {
-    return res.status(403).send('error 403: does not have permission for request');
-  }
-  res.render('urls_new', temp);
+  res.redirect(longURL);
 });
 
 // other routes
 
 app.get('/', (req, res) => {
+  
+  // if user is not logged in: redirect to /login
+  if (!req.session.userId) {
+    return res.redirect('/login');
+  }
+
+  // if user is logged in: redirect to /urls
   res.redirect('/urls');
+});
+
+app.get('/restricted', (req, res) => {
+
+
+  res.render('restricted', temp);
 });
 
 //
