@@ -224,9 +224,9 @@ app.post('/urls/:id', (req, res) => {
 
 app.get('/urls/:shortURL', (req, res) => {
 
-  // if user is not logged in: returns HTML with a relevant error message
+  // if user is not logged in...
   if (!req.session.userId) {
-    return res.redirect('/restricted');
+    return res.status(403).send('error 403: does not have permission for request');
   }
 
   // if user is logged it but does not own the URL with the given ID: returns HTML with a relevant error message
