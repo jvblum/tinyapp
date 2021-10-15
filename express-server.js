@@ -121,7 +121,8 @@ app.post('/login', (req, res) => {
   if (!user) {
     return res.status(403).send('email is not registered');
   }
-  if (bcrypt.compareSync(user.password, req.body.password)) {
+
+  if (!bcrypt.compareSync(req.body.password, user.password)) {
     return res.status(403).send('wrong password');
   }
 
