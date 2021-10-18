@@ -6,7 +6,8 @@ const {
   getUserByEmail,
   urlsForUser,
   generateRandomString,
-  doesThisUrlIdExist
+  doesThisUrlIdExist,
+  templateVariable
 } = require('./helpers');
 
 const salt = bcrypt.genSaltSync(1.6543);
@@ -19,20 +20,6 @@ app.use(cookieSession({
   name: 'session',
   keys: ['fkcngevkecn cpf jkuvqtkecn ocvgtkcnkuo'],
 }));
-app.use((req, res, next) => { // misc template handling
-
-  if (req.session.userId) {
-    temp.id = req.session.userId; // for index generation (urls_index)
-    if (usersDb[req.session.userId]) {
-      temp.user = usersDb[req.session.userId].email; // for display name (header)
-    }
-  } else {
-    temp.id = null;
-    temp.user = null;
-  }
-
-  next();
-});
 
 app.set('view engine', 'ejs');
 
@@ -54,19 +41,13 @@ const usersDb = {
   }
 };
 
-// template variables
-const temp = {
-  urls: urlDatabase,
-  shortURL: null,
-  longURL: null,
-  user: null,
-  id: null
-};
-
 // register
 
 app.get('/register', (req, res) => {
-
+  
+  const session = req.session.userId
+  temp = templateVariable(session, usersDb, urlDatabase);
+  
   res.render('register', temp);
 });
 
@@ -101,6 +82,9 @@ app.post('/register', (req, res) => {
 // login, logout
 
 app.get('/login', (req, res) => {
+
+  const session = req.session.userId
+  temp = templateVariable(session, usersDb, urlDatabase);
 
   // if user is logged in: redirects to /urls
   if (req.session.userId) {
@@ -144,6 +128,9 @@ app.get('/urls.json', (req, res) => {
 
 app.get('/urls', (req, res) => {
 
+  const session = req.session.userId
+  temp = templateVariable(session, usersDb, urlDatabase);
+
   // if user is not logged in: returns HTML with a relevant error message
   if (!req.session.userId) {
     return res.redirect('/restricted');
@@ -172,6 +159,9 @@ app.post('/urls', (req, res) => { // create new shortURL
 // urls/:
 
 app.get('/urls/new', (req, res) => {
+
+  const session = req.session.userId
+  temp = templateVariable(session, usersDb, urlDatabase);
 
   // if user is not logged in: redirects to the /login page
   if (!req.session.userId) {
@@ -211,6 +201,9 @@ app.post('/urls/:id/update', (req, res) => {
 
 app.post('/urls/:id', (req, res) => {
 
+  const session = req.session.userId
+  temp = templateVariable(session, usersDb, urlDatabase);
+
   // if user is not logged in...
   if (!req.session.userId) {
     return res.status(403).send('error 403: does not have permission for request');
@@ -224,6 +217,9 @@ app.post('/urls/:id', (req, res) => {
 });
 
 app.get('/urls/:shortURL', (req, res) => {
+
+  const session = req.session.userId
+  temp = templateVariable(session, usersDb, urlDatabase);
 
   // if user is not logged in...
   if (!req.session.userId) {
@@ -272,6 +268,8 @@ app.get('/', (req, res) => {
 
 app.get('/restricted', (req, res) => {
 
+  const session = req.session.userId
+  temp = templateVariable(session, usersDb, urlDatabase);
 
   res.render('restricted', temp);
 });

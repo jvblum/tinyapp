@@ -38,9 +38,27 @@ const doesThisUrlIdExist = (urlId, urlDb) => {
   return false;
 };
 
+// takes session and usersDb and urlsDb; return object for template variables
+const templateVariable = (session, usersDb, urlsDb) => {
+  const temp = { urls: urlsDb };
+
+  if (session) {
+    temp.id = session; // for index generation (urls_index)
+    if (usersDb[session]) {
+      temp.user = usersDb[session].email; // for display name (header)
+    }
+  } else {
+    temp.id = null;
+    temp.user = null;
+  }
+
+  return temp;
+};
+
 module.exports = {
   getUserByEmail,
   urlsForUser,
   generateRandomString,
-  doesThisUrlIdExist
+  doesThisUrlIdExist,
+  templateVariable
 };
