@@ -21,6 +21,7 @@ app.use(cookieSession({
   keys: ['fkcngevkecn cpf jkuvqtkecn ocvgtkcnkuo'],
 }));
 
+
 app.set('view engine', 'ejs');
 
 // variables&&
@@ -45,8 +46,8 @@ const usersDb = {
 
 app.get('/register', (req, res) => {
   
-  const session = req.session.userId
-  temp = templateVariable(session, usersDb, urlDatabase);
+  const session = req.session.userId;
+  const temp = templateVariable(session, usersDb, urlDatabase);
   
   res.render('register', temp);
 });
@@ -83,8 +84,8 @@ app.post('/register', (req, res) => {
 
 app.get('/login', (req, res) => {
 
-  const session = req.session.userId
-  temp = templateVariable(session, usersDb, urlDatabase);
+  const session = req.session.userId;
+  const temp = templateVariable(session, usersDb, urlDatabase);
 
   // if user is logged in: redirects to /urls
   if (req.session.userId) {
@@ -128,8 +129,8 @@ app.get('/urls.json', (req, res) => {
 
 app.get('/urls', (req, res) => {
 
-  const session = req.session.userId
-  temp = templateVariable(session, usersDb, urlDatabase);
+  const session = req.session.userId;
+  const temp = templateVariable(session, usersDb, urlDatabase);
 
   // if user is not logged in: returns HTML with a relevant error message
   if (!req.session.userId) {
@@ -152,6 +153,7 @@ app.post('/urls', (req, res) => { // create new shortURL
     shortURL,
     longURL: req.body.longURL
   };
+
   res.redirect(`/urls/${shortURL}`);
 
 });
@@ -160,8 +162,8 @@ app.post('/urls', (req, res) => { // create new shortURL
 
 app.get('/urls/new', (req, res) => {
 
-  const session = req.session.userId
-  temp = templateVariable(session, usersDb, urlDatabase);
+  const session = req.session.userId;
+  const temp = templateVariable(session, usersDb, urlDatabase);
 
   // if user is not logged in: redirects to the /login page
   if (!req.session.userId) {
@@ -188,8 +190,17 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 
 });
 
-app.post('/urls/:id/update', (req, res) => {
-  
+app.post('/urls/:id', (req, res) => {
+
+  if (!doesThisUrlIdExist(req.params.id, urlDatabase)) {
+    return res.status(404).send('error 404: this url does not exist');
+  }
+
+  // if user is not logged in...
+  if (!req.session.userId) {
+    return res.status(403).send('error 403: does not have permission for request');
+  }
+
   if (!urlsForUser(req.session.userId, urlDatabase).includes(req.params.id)) {
     return res.status(403).send('error 403: does not have permission for request');
   }
@@ -197,29 +208,16 @@ app.post('/urls/:id/update', (req, res) => {
   urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect(`/urls/${req.params.id}`);
   
-}); // needs to go before post requesting for '/urls/:id'
-
-app.post('/urls/:id', (req, res) => {
-
-  const session = req.session.userId
-  temp = templateVariable(session, usersDb, urlDatabase);
-
-  // if user is not logged in...
-  if (!req.session.userId) {
-    return res.status(403).send('error 403: does not have permission for request');
-  }
-  
-  if (!doesThisUrlIdExist(req.params.id, urlDatabase)) {
-    return res.status(404).send('error 404: this url does not exist');
-  }
-  res.render('urls_show', temp);
-
-});
+}); 
 
 app.get('/urls/:shortURL', (req, res) => {
 
-  const session = req.session.userId
-  temp = templateVariable(session, usersDb, urlDatabase);
+  const session = req.session.userId;
+
+  // if a URL for the given ID does not exist: returns HTML with a relevant error message
+  if (!doesThisUrlIdExist(req.params.shortURL, urlDatabase)) {
+    return res.status(404).send('error 404: this url does not exist');
+  }
 
   // if user is not logged in...
   if (!req.session.userId) {
@@ -231,13 +229,9 @@ app.get('/urls/:shortURL', (req, res) => {
     return res.status(403).send('error 403: does not have permission for request');
   }
   
-  // if a URL for the given ID does not exist: returns HTML with a relevant error message
-  if (!doesThisUrlIdExist(req.params.shortURL, urlDatabase)) {
-    return res.status(404).send('error 404: this url does not exist');
-  }
-
-  temp.shortURL = req.params.shortURL;
-  temp.longURL = urlDatabase[req.params.shortURL].longURL;
+  const shortURL = req.params.shortURL;
+  const longURL = urlDatabase[shortURL].longURL;
+  const temp = templateVariable(session, usersDb, urlDatabase, longURL, shortURL);
   
   res.render('urls_show', temp);
 });
@@ -268,8 +262,8 @@ app.get('/', (req, res) => {
 
 app.get('/restricted', (req, res) => {
 
-  const session = req.session.userId
-  temp = templateVariable(session, usersDb, urlDatabase);
+  const session = req.session.userId;
+  const temp = templateVariable(session, usersDb, urlDatabase);
 
   res.render('restricted', temp);
 });

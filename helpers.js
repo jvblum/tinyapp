@@ -2,7 +2,7 @@
 const getUserByEmail = (emailReq, usersDb) => {
   for (const user in usersDb) {
     if (usersDb[user].email === emailReq)
-      return usersDb[user]; 
+      return usersDb[user];
   }
   return false;
 };
@@ -17,7 +17,7 @@ const urlsForUser = (userId, urlsDb) => {
   return urls;
 };
 
-// takes number; returns string with the number as its length; 
+// takes number; returns string with the number as its length;
 // used for generating shortURL and userId;
 const generateRandomString = (length) => {
   let res = '';
@@ -38,18 +38,27 @@ const doesThisUrlIdExist = (urlId, urlDb) => {
   return false;
 };
 
-// takes session and usersDb and urlsDb; return object for template variables
-const templateVariable = (session, usersDb, urlsDb) => {
-  const temp = { urls: urlsDb };
+// takes session, usersDb, urlsDb, longURL, and shortURL; return object for template variables
+const templateVariable = (session, usersDb, urlsDb, longURL, shortURL) => {
+  const temp = {
+    urls: urlsDb,
+    id: null,
+    user: null,
+    shortURL: null,
+    longURL: null
+  };
 
   if (session) {
     temp.id = session; // for index generation (urls_index)
     if (usersDb[session]) {
       temp.user = usersDb[session].email; // for display name (header)
     }
-  } else {
-    temp.id = null;
-    temp.user = null;
+  }
+  if (longURL) {
+    temp.longURL = longURL;
+  }
+  if (shortURL) {
+    temp.shortURL = shortURL;
   }
 
   return temp;

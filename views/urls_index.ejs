@@ -30,8 +30,8 @@
                 <td><%= url %></td> 
                 <td><%= urls[url].longURL %></td>
                 <td>
-                  <form method="POST" action="/urls/<%= url %>/">
-                    <button type="submit" formmethod="post" style="color: black; background-color: white; outline-color: black;">Edit</button>
+                  <form method="GET" action="/urls/<%= url %>">
+                    <button type="submit" formmethod="GET" style="color: black; background-color: white; outline-color: black;">Edit</button>
                   </form>
                 </td>
                 <td>
